@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>VOX10</title>
+</head>
+<style>body{background: white;text-align:center;}</style>
+<body>
+	<audio id="adClock" src="audio/clock.mp3"></audio>
+	<audio id="adCorrect" src="audio/correct.mp3"></audio>
+	<audio id="adError" src="audio/error.mp3"></audio>
+	<audio id="adWinner" src="audio/winner.mp3"></audio>
+	<section id="pantallaJuegoI">
+		<section id="herramientasI" class="herramientasC">
+			<button id="iniciarI">START</button>
+		</section>
+		<p id="voztxtI" class="voztxtC">Voz a texto</p>
+		<p id="nnnI" class="nnnC">...</p>
+	</section>
+	<div id="callVidI"></div>
+	<script>
+audioCorrect = document.getElementById('adCorrect');
+audioError = document.getElementById('adError');
+audioClock = document.getElementById('adClock');
+audioWinner = document.getElementById('adWinner');
+
+vid = document.getElementById("vidI");
+recurso = document.getElementById("recursoI");
+
+iniciar = document.getElementById('iniciarI');
+iniciar.addEventListener('click',actiVozMicrf,false);
+//setTimeout('actiVozMicrf()',1000);
+
+voztxt = document.getElementById('voztxtI');
+nnn = document.getElementById('nnnI');
+
+const utterance = new SpeechSynthesisUtterance();
+utterance.lang = "es-CO";
+utterance.pitch = 1.5;
+utterance.volume = 1.4;
+utterance.rate = 1.6;
+
+rec = new webkitSpeechRecognition();
+rec.lang = "en-US";
+rec.continuous = true;
+rec.interim = true;
+rec.interimResults = true;
+
+traducir = [
+		["Sustantivo en singular y plural",""],
+		["Di casa","house"],
+		["Di casas","houses"],
+		
+			["Artículo determinativo más el sustantivo",""],
+		["Di la casa de forma general","house"],
+		["Di la casa de forma objetiva","the house"],
+			["Artículo determinativo más el sustantivo en plural",""],
+		["Di las casas de forma general","houses"],
+		["Di las casas de forma objetiva","the houses"],
+
+			/*["Artículo indeterminado más el sustantivo",""],
+		["Di una casa","a house",""],*/
+
+		/*********************************************/
+		["Respuestas no completadas",""],
+		/*********************************************/
+];
+
+videos = [
+	'video/000 house/00 Patreon Alphing.mp4',//'video/000 house/00 sustantivo en singular y plural.mp4',
+	'video/000 house/01 house.mp4',
+	'video/000 house/02 houses.mp4',
+	
+	'video/000 house/00 Patreon Alphing.mp4',//'video/000 house/03 articulo determinativo mas el sustantivo.mp4',
+	'video/000 house/04 house.mp4',
+	'video/000 house/05 the house.mp4',
+	'video/000 house/00 Patreon Alphing.mp4',//'video/000 house/06 articulo determinativo mas el sustantivo en plural.mp4',
+	'video/000 house/07 houses.mp4',
+	'video/000 house/08 the houses.mp4',
+	'video/000 house/ok.mp4',
+];
+/*----------------------------------------------*/
+callVid = document.getElementById('callVidI');
+
+for(i = 0; i < traducir.length; i++){
+	newVid = document.createElement('video');
+	newVid.id = 'vid'+i;
+	newVid.style.position = 'absolute';
+	newVid.style.left = (i*10)+'px';
+		newSrc = document.createElement('source');
+			newSrc.src = videos[i];
+		newVid.appendChild(newSrc);
+	callVid.appendChild(newVid);
+}
+/*----------------------------------------------*/
+
+audios = [
+	'audio tiempo',
+	'audio acertar',
+	'audio error',
+	'audio victoria',
+];
+
+vvt = [];//video respuesta y tutorial
+
+pps = 3;//Velocidad (mas disminuye tiempo de rspuesta) (menos aumenta el tiempo para respoder)
+
+cntr = 0;
+
+funcion = 'Locutor()';
+
+var accion = '',texto = '',duracion = 10;
+
+/************************ TIEMPO DE ESCUCHA **********************/
+/*---------------------------------------------------------------*/
+var separPre, separRes, separLetraPre, separLetraRes;
+for(frase in traducir){
+	separPre = traducir[frase][0].split(" ");
+	separRes = traducir[frase][1].split(" ");
+	console.log(separPre);
+	mas1 = 0;
+	mas2 = 0;
+	for(letra1 in separPre){
+		separLetraPre = separPre[letra1].split("");
+		mas1 = mas1 + separLetraPre.length;
+	}
+	traducir[frase].push((mas1/2)/pps);
+	for(letra2 in separRes){
+		separLetraRes = separRes[letra2].split("");
+		mas2 = mas2 + separLetraRes.length;
+	}
+	traducir[frase].push((mas2/2)/pps);
+}
+console.log(traducir);
+/*--- FIN TIEMPO DE ESCUCHA ---*/
+
+
+//PENDIENTE RANDOM
+
+/********************* ACTIVAR VOZ Y MICROFONO *******************/
+/*---------------------------------------------------------------*/
+function actiVozMicrf(){
+	//esperabla(introduccion[0],0);
+	//setTimeout(microfono,2450);
+	setTimeout(microfono,0);
+}
+
+function microfono(){
+	setTimeout(function(){accion='locutor()';texto=traducir[cntr][0];duracion=(traducir[cntr][2] + traducir[cntr][3])*1000;locutor(texto);},0);
+}
+
+function esperabla(texto,tiempo){setTimeout("locutor('"+texto+"')",tiempo*1000);}
+/*--- FIN ACTIVAR VOZ Y MICROFONO ---*/
+
+
+/***************************** INICIAR ***************************/
+/*---------------------------------------------------------------*/
+function locutor(blablabla){
+	nnn.innerHTML = '...';
+	utterance.text = blablabla;
+	speechSynthesis.speak(utterance);
+	console.log(blablabla);
+	rec.start();
+	rec.interimResults = true; //Muestra el reconocimiento instantaneo de voz
+	rec.addEventListener("result",escuchar);
+
+	setTimeout(function(){validar();},duracion);
+}
+function escuchar(event){
+	for(i = event.resultIndex; i < event.results.length; i++){
+		voztxt.innerHTML = event.results[i][0].transcript.toLowerCase();
+	}
+}
+intentos = 0;//-------------------------------------------------------------------------------------
+function validar(){
+	//audioClock.pause();
+	rec.abort();
+	buscarP = voztxt.innerHTML.indexOf(traducir[cntr][1]);
+	
+	if((cntr-1) > 0 && cntr < (videos.length+1)){
+		vidBack = document.getElementById('vid'+(cntr-1));
+		vidBack.style.visibility = 'hidden';
+		vidBack.style.zIndex = 0;
+	}
+
+	if((traducir[cntr][1] == voztxt.innerHTML) || (buscarP != -1)){
+		intentos = 0;//-------------------------------------------------------------------------------------
+		audioCorrect.playbackRate = 1.5;audioCorrect.volume = 0.4;audioCorrect.play();
+		nnn.innerHTML = 'Verdadero';
+		cntr++;
+	}else{audioError.play();nnn.innerHTML = 'Falso';
+		if(cntr >= videos.length){cntr = 1;}
+		//vidBack.style.visibility = 'hidden';
+		//vidBack.style.zIndex = 0;
+		vidId = document.getElementById('vid'+cntr);
+		console.log(cntr,videos.length);
+		vidId.style.visibility = 'visible';
+		vidId.style.zIndex = cntr;
+		vidId.play();
+		//vid.play();// RESPUESTA EN VIDEO DE PREGUNTAS --------------
+		//console.log(vid);
+		tresIntentos = intentos%3;//-------------------------------------------------------------------------------------
+		intentos++;//-------------------------------------------------------------------------------------
+			//console.log(tresIntentos);//-------------------------------------------------------------------------------------
+		if(tresIntentos == 2){//-------------------------------------------------------------------------------------
+			/*VIDEO AUDIO RESPUESTA CORRECTA EN 640x360*/
+			///vidId.style.zIndex = 0;
+			traducir.push([traducir[cntr][0],traducir[cntr][1],traducir[cntr][2],traducir[cntr][3]]);//----------
+			cntr++;//-------------------------------------------------------------------------------------
+		}//-------------------------------------------------------------------------------------
+	}
+	if(cntr<traducir.length){
+		tresIntentos = 0;
+		texto = traducir[cntr][0];
+		duracion = (traducir[cntr][2] + traducir[cntr][3])*1000;
+		setTimeout(function(){locutor(texto)},2000);
+	}else if(cntr==traducir.length){
+		setTimeout(function(){audioWinner.volume = 0.25;audioWinner.play();},2000);
+	}
+}
+/*--- FIN INICIAR ---*/
+	</script>
+</body>
+</html>
